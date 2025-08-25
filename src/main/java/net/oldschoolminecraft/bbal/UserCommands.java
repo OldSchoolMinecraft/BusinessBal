@@ -25,16 +25,36 @@ public class UserCommands implements CommandExecutor
         if (args.length < 1)
         {
             sender.sendMessage(ChatColor.DARK_GRAY + "------ " + ChatColor.GOLD + "BusinessBal User Commands" + ChatColor.DARK_GRAY + " ------");
-            sender.sendMessage(ChatColor.YELLOW + "/bbal view <account_name>" + ChatColor.WHITE + " - View the balance of an account.");
-            sender.sendMessage(ChatColor.YELLOW + "/bbal deposit <account_name> <amount>" + ChatColor.WHITE + " - Deposit money into account.");
-            sender.sendMessage(ChatColor.YELLOW + "/bbal withdraw <account_name> <amount>" + ChatColor.WHITE + " - Withdraw money from account.");
+            sender.sendMessage(ChatColor.YELLOW + "/bbal view <account_name>");
+            sender.sendMessage(ChatColor.WHITE + " - View the balance of an account.");
+
+            sender.sendMessage(ChatColor.YELLOW + "/bbal deposit <account_name> <amount>");
+            sender.sendMessage(ChatColor.WHITE + " - Deposit money into account.");
+
+            sender.sendMessage(ChatColor.YELLOW + "/bbal withdraw <account_name> <amount>");
+            sender.sendMessage(ChatColor.WHITE + " - Withdraw money from account.");
+
             // account owner commands
-            sender.sendMessage(ChatColor.YELLOW + "/bbal addtrustee <account_name> <player_name>" + ChatColor.WHITE + " - Add a trustee to account.");
-            sender.sendMessage(ChatColor.YELLOW + "/bbal removetrustee <account_name> <player_name>" + ChatColor.WHITE + " - Remove a trustee from account.");
-            sender.sendMessage(ChatColor.YELLOW + "/bbal setwithdrawlimit <account_name> <amount>" + ChatColor.WHITE + " - Set the withdraw limit for account.");
-            sender.sendMessage(ChatColor.YELLOW + "/bbal allowviewingbalance <account_name> <true|false>" + ChatColor.WHITE + " - Toggle balance visibility for trustees.");
+            sender.sendMessage(ChatColor.YELLOW + "/bbal addtrustee <account_name> <player_name>");
+            sender.sendMessage(ChatColor.WHITE + " - Add a trustee to account.");
+
+            sender.sendMessage(ChatColor.YELLOW + "/bbal removetrustee <account_name> <player_name>");
+            sender.sendMessage(ChatColor.WHITE + " - Remove a trustee from account.");
+
+            sender.sendMessage(ChatColor.YELLOW + "/bbal setwithdrawlimit <account_name> <amount>");
+            sender.sendMessage(ChatColor.WHITE + " - Set the withdraw limit for account.");
+
+            sender.sendMessage(ChatColor.YELLOW + "/bbal allowviewingbalance <account_name> <true|false>");
+            sender.sendMessage(ChatColor.WHITE + " - Toggle balance visibility for trustees.");
 
             sender.sendMessage(ChatColor.DARK_GRAY + "-------------------------------------");
+            return true;
+        }
+
+        if (!sender.hasPermission("bbal.user"))
+        {
+            sender.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
+            return true;
         }
 
         String subcommand = args.length > 0 ? args[0] : "";
@@ -45,7 +65,7 @@ public class UserCommands implements CommandExecutor
             if (args.length-1 < 1)
             {
                 sender.sendMessage(ChatColor.RED + "Usage: /bbal view <account_name>");
-                return false;
+                return true;
             }
 
             String accountName = args[1];
@@ -65,9 +85,15 @@ public class UserCommands implements CommandExecutor
                 return true;
             }
 
+            if (!account.trustees.contains(sender.getName()) && !sender.getName().equalsIgnoreCase(account.owner))
+            {
+                sender.sendMessage(ChatColor.RED + "You are not a trustee of this account.");
+                return true;
+            }
+
             if (!account.canTrusteesViewBalance && !sender.getName().equalsIgnoreCase(account.owner))
             {
-                sender.sendMessage(ChatColor.RED + "You do not have permission to view the balance of this account.");
+                sender.sendMessage(ChatColor.RED + "Balance viewing on this account is disabled for trustees.");
                 return true;
             }
 
@@ -81,7 +107,7 @@ public class UserCommands implements CommandExecutor
             if (args.length-1 < 2)
             {
                 sender.sendMessage(ChatColor.RED + "Usage: /bbal deposit <account_name> <amount>");
-                return false;
+                return true;
             }
 
             String accountName = args[1];
@@ -91,13 +117,13 @@ public class UserCommands implements CommandExecutor
                 amount = Double.parseDouble(args[2]);
             } catch (NumberFormatException e) {
                 sender.sendMessage(ChatColor.RED + "Invalid amount: " + args[2]);
-                return false;
+                return true;
             }
 
             if (amount <= 0)
             {
                 sender.sendMessage(ChatColor.RED + "Amount must be greater than zero.");
-                return false;
+                return true;
             }
 
             AccountUtility.BusinessAccount account;
@@ -115,6 +141,28 @@ public class UserCommands implements CommandExecutor
                 return true;
             }
 
+            if (!account.trustees.contains(sender.getName()) && !sender.getName().equalsIgnoreCase(account.owner))
+            {
+                sender.sendMessage(ChatColor.RED + "You are not a trustee of this account.");
+                return true;
+            }
+
+            String currencySymbol = plugin.config.getString("currency_symbol", "$");
+
+            // check if their essentials balance is sufficient
+            if (plugin.ess != null)
+            {
+                double userBalance = plugin.ess.getUser(sender.getName()).getMoney();
+                if (userBalance < amount)
+                {
+                    sender.sendMessage(ChatColor.RED + "Insufficient balance for deposit: " + ChatColor.YELLOW + currencySymbol + userBalance);
+                    return true;
+                }
+
+                // withdraw from essentials
+                plugin.ess.getUser(sender.getName()).setMoney(userBalance - amount);
+            }
+
             account.balance += amount;
 
             try
@@ -125,9 +173,12 @@ public class UserCommands implements CommandExecutor
                 return true;
             }
 
-            String currencySymbol = plugin.config.getString("currency_symbol", "$");
+            if (account.canTrusteesViewBalance || sender.getName().equalsIgnoreCase(account.owner)) {
+                sender.sendMessage(ChatColor.GREEN + "Deposited " + ChatColor.YELLOW + currencySymbol + amount + ChatColor.GREEN + " to account '" + ChatColor.GRAY + accountName + ChatColor.GREEN + "'. New balance: " + ChatColor.YELLOW + currencySymbol + account.balance);
+            } else {
+                sender.sendMessage(ChatColor.GREEN + "Deposited " + ChatColor.YELLOW + currencySymbol + amount + ChatColor.GREEN + " to account '" + ChatColor.GRAY + accountName + ChatColor.GREEN + "'.");
+            }
 
-            sender.sendMessage(ChatColor.GREEN + "Deposited " + ChatColor.YELLOW + currencySymbol + amount + ChatColor.GREEN + " to account '" + ChatColor.GRAY + accountName + ChatColor.GREEN + "'. New balance: " + ChatColor.YELLOW + currencySymbol + account.balance);
             return true;
         }
 
@@ -173,14 +224,31 @@ public class UserCommands implements CommandExecutor
                 return true;
             }
 
+            if (!account.trustees.contains(sender.getName()) && !sender.getName().equalsIgnoreCase(account.owner))
+            {
+                sender.sendMessage(ChatColor.RED + "You are not a trustee of this account.");
+                return true;
+            }
+
             String currencySymbol = plugin.config.getString("currency_symbol", "$");
 
             try
             {
-                double newBalance = account.withdraw(sender.getName(), amount);
+                account.withdraw(sender.getName(), amount);
                 AccountUtility.saveAccount(account);
 
-                sender.sendMessage(ChatColor.GREEN + "Withdrew " + ChatColor.YELLOW + currencySymbol + amount + ChatColor.GREEN + " from account '" + ChatColor.GRAY + accountName + ChatColor.GREEN + "'. New balance: " + ChatColor.YELLOW + currencySymbol + newBalance);
+                // deposit to essentials
+                if (plugin.ess != null)
+                {
+                    double userBalance = plugin.ess.getUser(sender.getName()).getMoney();
+                    plugin.ess.getUser(sender.getName()).setMoney(userBalance + amount);
+                }
+
+                if (account.canTrusteesViewBalance || sender.getName().equalsIgnoreCase(account.owner)) {
+                    sender.sendMessage(ChatColor.GREEN + "Withdrew " + ChatColor.YELLOW + currencySymbol + amount + ChatColor.GREEN + " from account '" + ChatColor.GRAY + accountName + ChatColor.GREEN + "'. New balance: " + ChatColor.YELLOW + currencySymbol + account.balance);
+                } else {
+                    sender.sendMessage(ChatColor.GREEN + "Withdrew " + ChatColor.YELLOW + currencySymbol + amount + ChatColor.GREEN + " from account '" + ChatColor.GRAY + accountName + ChatColor.GREEN + "'.");
+                }
             } catch (InsufficientFundsException e) {
                 if (account.canTrusteesViewBalance || sender.getName().equalsIgnoreCase(account.owner)) {
                     sender.sendMessage(ChatColor.RED + "Insufficient funds in account. Current balance: " + ChatColor.YELLOW + currencySymbol + account.balance);
@@ -190,7 +258,7 @@ public class UserCommands implements CommandExecutor
             } catch (WithdrawLimitExceededException e) {
                 sender.sendMessage(ChatColor.RED + "Withdraw amount exceeds the account's withdraw limit of " + ChatColor.YELLOW + currencySymbol + account.withdrawLimit);
             } catch (UnauthorizedTransactionException e) {
-                sender.sendMessage(ChatColor.RED + "You do not have permission to withdraw from this account.");
+                sender.sendMessage(ChatColor.RED + "You must be a trustee to withdraw from this account.");
             } catch (IOException e) {
                 sender.sendMessage(ChatColor.RED + "Error saving account: " + e.getMessage());
             }
@@ -204,7 +272,7 @@ public class UserCommands implements CommandExecutor
             if (args.length-1 < 2)
             {
                 sender.sendMessage(ChatColor.RED + "Usage: /bbal addtrustee <account_name> <player_name>");
-                return false;
+                return true;
             }
 
             String accountName = args[1];
@@ -227,7 +295,7 @@ public class UserCommands implements CommandExecutor
 
             if (!sender.getName().equalsIgnoreCase(account.owner))
             {
-                sender.sendMessage(ChatColor.RED + "You do not have permission to modify this account.");
+                sender.sendMessage(ChatColor.RED + "Only the account owner can add trustees.");
                 return true;
             }
 
@@ -257,7 +325,7 @@ public class UserCommands implements CommandExecutor
             if (args.length-1 < 2)
             {
                 sender.sendMessage(ChatColor.RED + "Usage: /bbal removetrustee <account_name> <player_name>");
-                return false;
+                return true;
             }
 
             String accountName = args[1];
@@ -280,7 +348,7 @@ public class UserCommands implements CommandExecutor
 
             if (!sender.getName().equalsIgnoreCase(account.owner))
             {
-                sender.sendMessage(ChatColor.RED + "You do not have permission to modify this account.");
+                sender.sendMessage(ChatColor.RED + "Only account owners can remove trustees.");
                 return true;
             }
 
@@ -309,7 +377,7 @@ public class UserCommands implements CommandExecutor
             if (args.length-1 < 2)
             {
                 sender.sendMessage(ChatColor.RED + "Usage: /bbal setwithdrawlimit <account_name> <amount>");
-                return false;
+                return true;
             }
 
             String accountName = args[1];
@@ -319,13 +387,13 @@ public class UserCommands implements CommandExecutor
                 amount = Double.parseDouble(args[2]);
             } catch (NumberFormatException e) {
                 sender.sendMessage(ChatColor.RED + "Invalid amount: " + args[2]);
-                return false;
+                return true;
             }
 
             if (amount <= 0)
             {
                 sender.sendMessage(ChatColor.RED + "Amount must be greater than zero.");
-                return false;
+                return true;
             }
 
             AccountUtility.BusinessAccount account;
@@ -345,7 +413,7 @@ public class UserCommands implements CommandExecutor
 
             if (!sender.getName().equalsIgnoreCase(account.owner))
             {
-                sender.sendMessage(ChatColor.RED + "You do not have permission to modify this account.");
+                sender.sendMessage(ChatColor.RED + "Only account owners can change the withdrawal limit.");
                 return true;
             }
 
@@ -370,7 +438,7 @@ public class UserCommands implements CommandExecutor
             if (args.length-1 < 2)
             {
                 sender.sendMessage(ChatColor.RED + "Usage: /bbal allowviewingbalance <account_name> <true|false>");
-                return false;
+                return true;
             }
 
             String accountName = args[1];
@@ -380,7 +448,7 @@ public class UserCommands implements CommandExecutor
                 allow = Boolean.parseBoolean(args[2]);
             } catch (Exception e) {
                 sender.sendMessage(ChatColor.RED + "Invalid value: " + args[2] + ". Use true or false.");
-                return false;
+                return true;
             }
 
             AccountUtility.BusinessAccount account;
@@ -400,7 +468,7 @@ public class UserCommands implements CommandExecutor
 
             if (!sender.getName().equalsIgnoreCase(account.owner))
             {
-                sender.sendMessage(ChatColor.RED + "You do not have permission to modify this account.");
+                sender.sendMessage(ChatColor.RED + "Only account owners can change balance viewing permissions.");
                 return true;
             }
 

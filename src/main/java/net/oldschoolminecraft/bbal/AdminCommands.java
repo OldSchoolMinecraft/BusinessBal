@@ -22,9 +22,21 @@ public class AdminCommands implements CommandExecutor
         if (args.length < 1)
         {
             sender.sendMessage(ChatColor.DARK_GRAY + "------ " + ChatColor.GOLD + "BusinessBal Admin Commands" + ChatColor.DARK_GRAY + " ------");
-            sender.sendMessage(ChatColor.YELLOW + "/bbaladmin reload" + ChatColor.WHITE + " - Reload the config file.");
-            sender.sendMessage(ChatColor.YELLOW + "/bbaladmin create <account_name> <account_owner>" + ChatColor.WHITE + " - Create a new business account.");
-            sender.sendMessage(ChatColor.YELLOW + "/bbaladmin delete <account_name>" + ChatColor.WHITE + " - Delete a business account.");
+            sender.sendMessage(ChatColor.YELLOW + "/bbaladmin reload");
+            sender.sendMessage(ChatColor.WHITE + " - Reload the config file.");
+
+            sender.sendMessage(ChatColor.YELLOW + "/bbaladmin create <account_name> <account_owner>");
+            sender.sendMessage(ChatColor.WHITE + " - Create a new business account.");
+
+            sender.sendMessage(ChatColor.YELLOW + "/bbaladmin delete <account_name>");
+            sender.sendMessage(ChatColor.WHITE + " - Delete a business account.");
+            return true;
+        }
+
+        if (!sender.hasPermission("bbal.admin"))
+        {
+            sender.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
+            return true;
         }
 
         String subcommand = args.length > 0 ? args[0] : "";
@@ -41,7 +53,7 @@ public class AdminCommands implements CommandExecutor
             if (args.length-1 < 2)
             {
                 sender.sendMessage(ChatColor.RED + "Usage: /create <account_name> <account_owner>");
-                return false;
+                return true;
             }
 
             String accountName = args[1];
@@ -66,7 +78,7 @@ public class AdminCommands implements CommandExecutor
             if (args.length-1 < 1)
             {
                 sender.sendMessage(ChatColor.RED + "Usage: /delete <account_name>");
-                return false;
+                return true;
             }
 
             String accountName = args[1];

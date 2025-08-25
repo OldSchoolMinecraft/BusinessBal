@@ -9,6 +9,7 @@ public class BBalConfig extends Configuration
     public BBalConfig(File file)
     {
         super(file);
+        reload();
     }
 
     public void reload()

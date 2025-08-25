@@ -2,3 +2,15 @@ name: BusinessBal
 version: 1.0
 author: moderator_man
 main: net.oldschoolminecraft.bbal.BusinessBal
+depend:
+  - Essentials
+commands:
+  bbaladmin:
+    description: Admin command for BusinessBal plugin
+    usage: /<command> <args>
+    permission: bbal.admin
+    default: op
+  bbal:
+    description: User commands for business accounts
+    usage: /<command> <args>
+    permission: bbal.user
