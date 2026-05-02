@@ -97,7 +97,7 @@ public class UserCommands implements CommandExecutor
                 return true;
             }
 
-            sender.sendMessage(ChatColor.GREEN + "Account '" + ChatColor.GRAY + accountName + ChatColor.GREEN + "' balance: " + ChatColor.YELLOW + "$" + account.balance);
+            sender.sendMessage(ChatColor.GREEN + "Account '" + ChatColor.GRAY + accountName + ChatColor.GREEN + "' balance: " + ChatColor.YELLOW + plugin.getConfig().getString("currency_symbol", "$") + account.balance);
             return true;
         }
 
