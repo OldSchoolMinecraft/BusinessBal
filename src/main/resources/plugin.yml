@@ -1,9 +1,9 @@
 name: BusinessBal
-version: 1.0
+version: 1.0-Vault
 author: moderator_man
 main: net.oldschoolminecraft.bbal.BusinessBal
 depend:
-  - Essentials
+  - Vault
 commands:
   bbaladmin:
     description: Admin command for BusinessBal plugin

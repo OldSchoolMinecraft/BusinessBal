@@ -150,18 +150,15 @@ public class UserCommands implements CommandExecutor
             String currencySymbol = plugin.config.getString("currency_symbol", "$");
 
             // check if their essentials balance is sufficient
-            if (plugin.ess != null)
+            double userBalance = plugin.getEcoInterface().getMoney(sender.getName());
+            if (userBalance < amount)
             {
-                double userBalance = plugin.ess.getUser(sender.getName()).getMoney();
-                if (userBalance < amount)
-                {
-                    sender.sendMessage(ChatColor.RED + "Insufficient balance for deposit: " + ChatColor.YELLOW + currencySymbol + userBalance);
-                    return true;
-                }
-
-                // withdraw from essentials
-                plugin.ess.getUser(sender.getName()).setMoney(userBalance - amount);
+                sender.sendMessage(ChatColor.RED + "Insufficient balance for deposit: " + ChatColor.YELLOW + currencySymbol + userBalance);
+                return true;
             }
+
+            // withdraw from essentials
+            plugin.getEcoInterface().setMoney(sender.getName(), userBalance - amount);
 
             account.balance += amount;
 
@@ -237,12 +234,9 @@ public class UserCommands implements CommandExecutor
                 account.withdraw(sender.getName(), amount);
                 AccountUtility.saveAccount(account);
 
-                // deposit to essentials
-                if (plugin.ess != null)
-                {
-                    double userBalance = plugin.ess.getUser(sender.getName()).getMoney();
-                    plugin.ess.getUser(sender.getName()).setMoney(userBalance + amount);
-                }
+                // deposit to eco account
+                double userBalance = plugin.getEcoInterface().getMoney(sender.getName());
+                plugin.getEcoInterface().setMoney(sender.getName(), userBalance + amount);
 
                 if (account.canTrusteesViewBalance || sender.getName().equalsIgnoreCase(account.owner)) {
                     sender.sendMessage(ChatColor.GREEN + "Withdrew " + ChatColor.YELLOW + currencySymbol + amount + ChatColor.GREEN + " from account '" + ChatColor.GRAY + accountName + ChatColor.GREEN + "'. New balance: " + ChatColor.YELLOW + currencySymbol + account.balance);
