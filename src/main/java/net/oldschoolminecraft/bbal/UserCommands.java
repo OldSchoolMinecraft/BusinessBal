@@ -85,13 +85,13 @@ public class UserCommands implements CommandExecutor
                 return true;
             }
 
-            if (!account.trustees.contains(sender.getName()) && !sender.getName().equalsIgnoreCase(account.owner))
+            if (!account.trustees.contains(sender.getName()) && !sender.getName().equalsIgnoreCase(account.owner) && !sender.isOp())
             {
                 sender.sendMessage(ChatColor.RED + "You are not a trustee of this account.");
                 return true;
             }
 
-            if (!account.canTrusteesViewBalance && !sender.getName().equalsIgnoreCase(account.owner))
+            if (!account.canTrusteesViewBalance && !sender.getName().equalsIgnoreCase(account.owner) && !sender.isOp())
             {
                 sender.sendMessage(ChatColor.RED + "Balance viewing on this account is disabled for trustees.");
                 return true;
