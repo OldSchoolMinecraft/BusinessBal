@@ -85,13 +85,13 @@ public class UserCommands implements CommandExecutor
                 return true;
             }
 
-            if (!account.trustees.contains(sender.getName()) && !sender.getName().equalsIgnoreCase(account.owner))
+            if (!account.trustees.contains(sender.getName()) && !sender.getName().equalsIgnoreCase(account.owner) && !sender.isOp())
             {
                 sender.sendMessage(ChatColor.RED + "You are not a trustee of this account.");
                 return true;
             }
 
-            if (!account.canTrusteesViewBalance && !sender.getName().equalsIgnoreCase(account.owner))
+            if (!account.canTrusteesViewBalance && !sender.getName().equalsIgnoreCase(account.owner) && !sender.isOp())
             {
                 sender.sendMessage(ChatColor.RED + "Balance viewing on this account is disabled for trustees.");
                 return true;
@@ -196,8 +196,7 @@ public class UserCommands implements CommandExecutor
             try
             {
                 amount = Double.parseDouble(args[2]);
-            } catch (NumberFormatException e)
-            {
+            } catch (NumberFormatException e) {
                 sender.sendMessage(ChatColor.RED + "Invalid amount: " + args[2]);
                 return true;
             }
@@ -212,8 +211,7 @@ public class UserCommands implements CommandExecutor
             try
             {
                 account = AccountUtility.loadAccount(accountName);
-            } catch (Exception e)
-            {
+            } catch (Exception e) {
                 sender.sendMessage(ChatColor.RED + "Error loading account: " + e.getMessage());
                 return true;
             }
@@ -244,7 +242,8 @@ public class UserCommands implements CommandExecutor
                     plugin.ess.getUser(sender.getName()).setMoney(userBalance + amount);
                 }
 
-                if (account.canTrusteesViewBalance || sender.getName().equalsIgnoreCase(account.owner)) {
+                if (account.canTrusteesViewBalance || sender.getName().equalsIgnoreCase(account.owner))
+                {
                     sender.sendMessage(ChatColor.GREEN + "Withdrew " + ChatColor.YELLOW + currencySymbol + amount + ChatColor.GREEN + " from account '" + ChatColor.GRAY + accountName + ChatColor.GREEN + "'. New balance: " + ChatColor.YELLOW + currencySymbol + account.balance);
                 } else {
                     sender.sendMessage(ChatColor.GREEN + "Withdrew " + ChatColor.YELLOW + currencySymbol + amount + ChatColor.GREEN + " from account '" + ChatColor.GRAY + accountName + ChatColor.GREEN + "'.");

@@ -26,6 +26,11 @@ public class AccountUtility
             PARENT_DIR.mkdirs();
     }
 
+    public static File getAccountDir()
+    {
+        return PARENT_DIR;
+    }
+
     public static File getAccountFile(String accountName)
     {
         return new File(PARENT_DIR, accountName.toLowerCase() + ".json");
