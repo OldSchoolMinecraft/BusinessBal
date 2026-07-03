@@ -6,6 +6,7 @@ import net.oldschoolminecraft.bbal.ex.BalanceVisibilityException;
 import net.oldschoolminecraft.bbal.ex.InsufficientFundsException;
 import net.oldschoolminecraft.bbal.ex.UnauthorizedTransactionException;
 import net.oldschoolminecraft.bbal.ex.WithdrawLimitExceededException;
+import net.oldschoolminecraft.bbal.taxes.TaxReport;
 
 import java.io.File;
 import java.io.FileReader;
@@ -104,6 +105,24 @@ public class AccountUtility
             if (!canTrusteesViewBalance && !owner.equals(playerName))
                 throw new BalanceVisibilityException();
             return balance;
+        }
+
+        /**
+         * Apply a tax to the account balance.
+         * @param percent
+         * @return amount removed from the balance
+         */
+        public TaxReport tax(double percent)
+        {
+            double newBalance = reduceByPercent(balance, percent);
+            double balanceDelta = balance - newBalance;
+            balance = newBalance;
+            return new TaxReport(this.name, balanceDelta);
+        }
+
+        private double reduceByPercent(double value, double percent)
+        {
+            return value * (1.0 - percent / 100.0);
         }
     }
 }

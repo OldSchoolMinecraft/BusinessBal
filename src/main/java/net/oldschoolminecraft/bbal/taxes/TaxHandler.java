@@ -1,14 +1,19 @@
 package net.oldschoolminecraft.bbal.taxes;
 
+import com.earth2me.essentials.api.Economy;
+import com.google.gson.Gson;
 import net.oldschoolminecraft.bbal.AccountUtility;
 import net.oldschoolminecraft.bbal.TaxDayConfig;
 
 import java.io.File;
+import java.io.FileReader;
 import java.util.Calendar;
 import java.util.Objects;
 
 public class TaxHandler implements Runnable
 {
+    private static final Gson gson = new Gson();
+
     private TaxDayConfig taxDayConfig;
 
     public TaxHandler(TaxDayConfig taxDayConfig)
@@ -25,17 +30,20 @@ public class TaxHandler implements Runnable
         {
             if (file.isDirectory()) continue;
             if (!file.getName().endsWith(".json")) continue;
+
+            try (FileReader reader = new FileReader(file))
+            {
+                AccountUtility.BusinessAccount account = gson.fromJson(reader, AccountUtility.BusinessAccount.class);
+                TaxReport report = account.tax(0.3);
+                //TODO: save tax report to folder specific to the account in question
+            } catch (Exception ex) {
+                ex.printStackTrace(System.err);
+            }
         }
-    }
 
-    private double applyTax(double balance)
-    {
-        return reduceByPercent(balance, 0.3);
-    }
-
-    private double reduceByPercent(double value, double percent)
-    {
-        return value * (1.0 - percent / 100.0);
+        // taxes ran, we need to record that in the config
+        taxDayConfig.setProperty("last_tax_day", getToday());
+        taxDayConfig.save();
     }
 
     private boolean isTaxDay()
