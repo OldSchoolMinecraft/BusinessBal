@@ -2,6 +2,7 @@ package net.oldschoolminecraft.bbal;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import net.oldschoolminecraft.bbal.contracts.shares.ShareLedger;
 import net.oldschoolminecraft.bbal.ex.BalanceVisibilityException;
 import net.oldschoolminecraft.bbal.ex.InsufficientFundsException;
 import net.oldschoolminecraft.bbal.ex.UnauthorizedTransactionException;
@@ -64,6 +65,7 @@ public class AccountUtility
         public double withdrawLimit;
         public boolean canTrusteesViewBalance;
         public ArrayList<String> trustees;
+        public ShareLedger shareLedger;
 
         public BusinessAccount(String name, String owner, double withdrawLimit, boolean canTrusteesViewBalance)
         {
@@ -73,6 +75,13 @@ public class AccountUtility
             this.withdrawLimit = withdrawLimit;
             this.canTrusteesViewBalance = canTrusteesViewBalance;
             this.trustees = new ArrayList<>();
+            this.shareLedger = null;
+        }
+
+        public void IPO(int initialTotalShares)
+        {
+            if (shareLedger != null) return;
+            shareLedger = ShareLedger.create(owner, initialTotalShares);
         }
 
         public void addTrustee(String playerName)
@@ -123,6 +132,14 @@ public class AccountUtility
         private double reduceByPercent(double value, double percent)
         {
             return value * (1.0 - percent / 100.0);
+        }
+
+        public int getShares(String player) {
+            return shareLedger.getShares(player);
+        }
+
+        public double getOwnershipPercent(String player) {
+            return shareLedger.getOwnershipPercent(player);
         }
     }
 }
